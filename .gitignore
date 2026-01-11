@@ -1,4 +1,10 @@
 .env
 .adk
+.mp3
+.json
+.db
+.sqlite3
+
+chroma_db/
 
 __pycache__/
