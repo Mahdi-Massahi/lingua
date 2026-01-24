@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lingua Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-800">Lingua Dashboard</h1>
+            <p class="text-gray-600">Track your language learning progress</p>
+        </header>
+
+        <!-- User Profile Section -->
+        <section id="user-profile" class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">User Profile</h2>
+            <div id="profile-content" class="text-gray-600">
+                Loading profile...
+            </div>
+        </section>
+
+        <!-- Vocabulary Section -->
+        <section id="vocabulary" class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Vocabulary List</h2>
+            <div class="mb-4">
+                <input type="text" id="search-input" placeholder="Search vocabulary (semantic search)..." class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full table-auto">
+                    <thead class="bg-gray-200">
+                        <tr>
+                            <th class="px-4 py-2 text-left text-gray-600 font-medium">Phrase</th>
+                            <th class="px-4 py-2 text-left text-gray-600 font-medium">Translation</th>
+                            <th class="px-4 py-2 text-left text-gray-600 font-medium">Language</th>
+                            <th class="px-4 py-2 text-left text-gray-600 font-medium">Category</th>
+                            <th class="px-4 py-2 text-left text-gray-600 font-medium">Stats</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vocabulary-list" class="divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="5" class="px-4 py-2 text-center text-gray-500">Loading vocabulary...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Fetch and display User Profile
+        async function loadProfile() {
+            try {
+                const response = await fetch('/api/user');
+                const data = await response.json();
+                const container = document.getElementById('profile-content');
+                
+                if (Object.keys(data).length === 0) {
+                    container.innerHTML = '<p>No profile data available yet.</p>';
+                    return;
+                }
+
+                let html = '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">';
+                for (const [key, value] of Object.entries(data)) {
+                    html += `
+                        <div class="border-b pb-2">
+                            <span class="font-medium text-gray-800 capitalize">${key.replace(/_/g, ' ')}:</span>
+                            <span class="ml-2">${value}</span>
+                        </div>
+                    `;
+                }
+                html += '</div>';
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                document.getElementById('profile-content').innerText = 'Error loading profile.';
+            }
+        }
+
+        function renderVocabulary(data) {
+            const tbody = document.getElementById('vocabulary-list');
+            
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">No vocabulary found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map(item => {
+                const meta = item.metadata;
+                const distance = item.distance !== undefined ? `<div class="text-xs text-blue-500">Dist: ${item.distance.toFixed(4)}</div>` : '';
+                const isStarred = meta.starred === true;
+                const starColor = isStarred ? 'text-yellow-500' : 'text-gray-300';
+                const escapedText = item.text.replace(/'/g, "\\'");
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 font-medium text-gray-800 flex items-center gap-2">
+                             <button onclick="playAudio('${escapedText}')" class="text-blue-500 hover:text-blue-700 focus:outline-none" title="Play Pronunciation">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                                </svg>
+                            </button>
+                            <button onclick="toggleStar('${item.id}', this)" class="${starColor} hover:text-yellow-600 focus:outline-none" title="Toggle Favorite">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                            </button>
+                            ${item.text}
+                        </td>
+                        <td class="px-4 py-2 text-gray-600">${meta.translation || '-'}</td>
+                        <td class="px-4 py-2 text-gray-600">${meta.language || '-'}</td>
+                        <td class="px-4 py-2 text-gray-600">${meta.category || '-'}</td>
+                        <td class="px-4 py-2 text-sm text-gray-500">
+                            <div>Reviews: ${meta.review_count || 0}</div>
+                            <div>Score: ${meta.score ? meta.score.toFixed(1) : '0.0'}</div>
+                            ${distance}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function playAudio(text) {
+            const audio = new Audio(`/api/speak?text=${encodeURIComponent(text)}`);
+            audio.play();
+        }
+
+        async function toggleStar(id, btn) {
+            try {
+                const response = await fetch(`/api/vocabulary/${id}/star`, { method: 'POST' });
+                const data = await response.json();
+                if (data.starred) {
+                    btn.classList.remove('text-gray-300');
+                    btn.classList.add('text-yellow-500');
+                } else {
+                    btn.classList.remove('text-yellow-500');
+                    btn.classList.add('text-gray-300');
+                }
+            } catch (error) {
+                console.error('Error toggling star:', error);
+            }
+        }
+
+        // Fetch and display Vocabulary
+        async function loadVocabulary() {
+            try {
+                const response = await fetch('/api/vocabulary');
+                const data = await response.json();
+                renderVocabulary(data);
+            } catch (error) {
+                console.error('Error loading vocabulary:', error);
+                document.getElementById('vocabulary-list').innerHTML = '<tr><td colspan="5" class="px-4 py-2 text-center text-red-500">Error loading vocabulary.</td></tr>';
+            }
+        }
+
+        // Search Vocabulary
+        async function searchVocabulary(query) {
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                renderVocabulary(data);
+            } catch (error) {
+                console.error('Error searching vocabulary:', error);
+                document.getElementById('vocabulary-list').innerHTML = '<tr><td colspan="5" class="px-4 py-2 text-center text-red-500">Error searching vocabulary.</td></tr>';
+            }
+        }
+
+        // Search Input Logic
+        const searchInput = document.getElementById('search-input');
+        let debounceTimer;
+
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const query = e.target.value.trim();
+                if (query) {
+                    searchVocabulary(query);
+                } else {
+                    loadVocabulary();
+                }
+            }, 300);
+        });
+
+        // Initial load
+        loadProfile();
+        loadVocabulary();
+    </script>
+</body>
+</html>

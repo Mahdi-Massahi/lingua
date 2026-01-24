@@ -76,6 +76,22 @@ class VectorStore:
 
         return formatted_results
 
+    def get_all_phrases(self, limit: int = 100):
+        """Retrieves all phrases from the vector store."""
+        results = self.collection.get(limit=limit)
+
+        formatted_results = []
+        if results["ids"]:
+            for i in range(len(results["ids"])):
+                item = {
+                    "id": results["ids"][i],
+                    "text": results["documents"][i],
+                    "metadata": results["metadatas"][i] if results["metadatas"] else {},
+                }
+                formatted_results.append(item)
+
+        return formatted_results
+
     def update_review_stats(self, doc_id: str, score: float):
         """Updates review statistics for a phrase."""
         # Fetch current metadata
@@ -91,3 +107,18 @@ class VectorStore:
             )
 
             self.collection.update(ids=[doc_id], metadatas=[metadata])
+
+    def toggle_star(self, doc_id: str):
+        """Toggles the 'starred' status of a phrase."""
+        item = self.collection.get(ids=[doc_id])
+        if item["metadatas"]:
+            metadata = item["metadatas"][0]
+            # Convert boolean to string or store as boolean if supported.
+            # ChromaDB supports booleans, ints, floats, strings.
+            current_status = metadata.get("starred", False)
+            new_status = not current_status
+            metadata["starred"] = new_status
+
+            self.collection.update(ids=[doc_id], metadatas=[metadata])
+            return new_status
+        return False
