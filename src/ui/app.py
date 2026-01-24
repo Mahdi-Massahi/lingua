@@ -60,6 +60,9 @@ async def get_vocabulary():
                 )
             except Exception:
                 item["metadata"]["references"] = []
+
+    # Sort by created_at descending (newest first)
+    vocab.sort(key=lambda x: x["metadata"].get("created_at", ""), reverse=True)
     return vocab
 
 
