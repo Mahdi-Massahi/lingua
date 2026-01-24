@@ -1,9 +1,6 @@
-from gtts import gTTS
-import subprocess
-import platform
-import io
+import json
+import time
 from google.adk.tools.tool_context import ToolContext
-from google.genai import types
 from .memory.vector_store import VectorStore
 from .memory.user_store import UserStore
 
@@ -12,17 +9,27 @@ vector_store = VectorStore()
 user_store = UserStore()
 
 
-def add_to_vocabulary(text: str, translation: str, context: str, category: str):
+def add_to_vocabulary(
+    tool_context: ToolContext, text: str, translation: str, context: str, category: str
+):
     """
     Saves a new phrase/sentence to the user's vocabulary for future review.
 
     Args:
+        tool_context: The tool context (provided by system).
         text: The text in the target language (e.g., Dutch).
         translation: The English translation.
         context: The surrounding conversation or situation.
         category: A tag like 'formal', 'informal', 'business', 'greeting'.
     """
-    vector_store.add_phrase(text, translation, context, category)
+    session_id = None
+    if getattr(tool_context, "session", None):
+        session_id = getattr(tool_context.session, "id", None)
+
+    # Store reference
+    reference = {"session_id": session_id, "timestamp": time.time()}
+
+    vector_store.add_phrase(text, translation, context, category, reference=reference)
     return f"Saved '{text}' to vocabulary."
 
 
@@ -79,51 +86,6 @@ def increment_review_count(text: str):
         return f"Updated review count for '{item['text']}'."
     else:
         return f"Phrase '{text}' not found."
-
-
-async def speak_text(tool_context: ToolContext, text: str, lang: str = "nl"):
-    """
-    Pronounces the text using text-to-speech and saves it as an artifact.
-
-    Args:
-        tool_context: The tool context.
-        text: The text to speak.
-        lang: The language code (default 'nl' for Dutch).
-    """
-    try:
-        tts = gTTS(text=text, lang=lang)
-        fp = io.BytesIO()
-        tts.write_to_fp(fp)
-        fp.seek(0)
-        audio_data = fp.read()
-
-        # Create artifact
-        # Note: encoding might be needed if Blob expects base64 string
-        # Checking google.genai types: Blob.data is bytes.
-
-        part = types.Part(
-            inline_data=types.Blob(mime_type="audio/mp3", data=audio_data)
-        )
-
-        # Generate a safe filename
-        safe_text = "".join([c for c in text if c.isalnum() or c in " -_"])[:20]
-        filename = f"audio_{safe_text}.mp3"
-
-        await tool_context.save_artifact(filename=filename, artifact=part)
-
-        # Also play locally if on macOS (optional, but good for hybrid)
-        if platform.system() == "Darwin":
-            try:
-                # We need a temp file for afplay
-                with open("temp_audio.mp3", "wb") as f:
-                    f.write(audio_data)
-                subprocess.run(["afplay", "temp_audio.mp3"])
-            except Exception:
-                pass
-
-        return f"Audio generated and saved as artifact: {filename}"
-    except Exception as e:
-        return f"Error generating audio: {str(e)}"
 
 
 def update_user_info(key: str, value: str):

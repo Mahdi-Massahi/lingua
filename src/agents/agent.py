@@ -5,7 +5,6 @@ from ._prompts import SYSTEM_PROMPT
 from ._tools import (
     add_to_vocabulary,
     review_vocabulary,
-    speak_text,
     update_user_info,
     get_user_info,
     check_vocabulary,
@@ -21,7 +20,6 @@ root_agent = Agent(
     tools=[
         add_to_vocabulary,
         review_vocabulary,
-        speak_text,
         update_user_info,
         get_user_info,
         check_vocabulary,

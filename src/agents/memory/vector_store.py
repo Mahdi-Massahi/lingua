@@ -1,5 +1,6 @@
 import os
 import uuid
+import json
 from datetime import datetime
 import chromadb
 from chromadb.utils import embedding_functions
@@ -33,9 +34,15 @@ class VectorStore:
         context: str,
         category: str,
         language: str = "dutch",
+        reference: dict = None,
     ):
         """Adds a new phrase to the vector store."""
         now = datetime.now().isoformat()
+
+        refs = []
+        if reference:
+            refs.append(reference)
+
         metadata = {
             "created_at": now,
             "last_review": now,
@@ -45,6 +52,7 @@ class VectorStore:
             "category": category,
             "translation": translation,
             "context": context,
+            "references": json.dumps(refs),
         }
 
         doc_id = str(uuid.uuid4())

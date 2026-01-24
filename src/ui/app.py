@@ -50,7 +50,17 @@ async def get_user_profile():
 
 @app.get("/api/vocabulary")
 async def get_vocabulary():
-    return vector_store.get_all_phrases()
+    vocab = vector_store.get_all_phrases()
+    # Deserialize references if present
+    for item in vocab:
+        if "references" in item["metadata"]:
+            try:
+                item["metadata"]["references"] = json.loads(
+                    item["metadata"]["references"]
+                )
+            except Exception:
+                item["metadata"]["references"] = []
+    return vocab
 
 
 @app.get("/api/search")
@@ -112,15 +122,21 @@ async def get_session_history(session_id: str):
             continue
 
         text = ""
+        tool_calls = []
         for part in event.content.parts:
             if part.text:
                 text += part.text
+            elif part.function_call:
+                tool_calls.append(
+                    {"name": part.function_call.name, "args": part.function_call.args}
+                )
 
-        if text:
+        if text or tool_calls:
             messages.append(
                 {
                     "role": event.content.role,
                     "text": text,
+                    "tool_calls": tool_calls,
                     "timestamp": datetime.fromtimestamp(event.timestamp).isoformat(),
                 }
             )
@@ -160,7 +176,9 @@ async def chat_endpoint(request: ChatRequest):
             if part.text:
                 response_text += part.text
             elif part.function_call:
-                tool_calls.append(part.function_call.name)
+                tool_calls.append(
+                    {"name": part.function_call.name, "args": part.function_call.args}
+                )
 
     return {
         "response": response_text,
