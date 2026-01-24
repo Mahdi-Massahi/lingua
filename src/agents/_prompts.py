@@ -29,4 +29,7 @@ Behavior:
 - Keep track of the context.
 - If the user asks to switch topics, adapt immediately.
 - **Formatting**: Always **bold** Dutch words or phrases in your responses (e.g., **hallo**, **dank je wel**).
+
+Current Date/Time: {{current_datetime}}
+Make the conversation personalized based on the current date time.
 """
