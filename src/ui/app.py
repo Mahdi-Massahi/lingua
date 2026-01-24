@@ -117,29 +117,47 @@ async def get_session_history(session_id: str):
         return []
 
     messages = []
+    current_msg = None
+
     for event in session.events:
         if not event.content:
             continue
 
+        role = event.content.role
+
+        # Extract content
         text = ""
-        tool_calls = []
+        tools = []
         for part in event.content.parts:
             if part.text:
                 text += part.text
             elif part.function_call:
-                tool_calls.append(
+                tools.append(
                     {"name": part.function_call.name, "args": part.function_call.args}
                 )
 
-        if text or tool_calls:
-            messages.append(
-                {
-                    "role": event.content.role,
-                    "text": text,
-                    "tool_calls": tool_calls,
-                    "timestamp": datetime.fromtimestamp(event.timestamp).isoformat(),
-                }
-            )
+        if not text and not tools:
+            continue
+
+        # Merge Logic
+        if current_msg and current_msg["role"] == role:
+            current_msg["text"] += text
+            current_msg["tool_calls"].extend(tools)
+            # Typically keep timestamp of first event in turn
+        else:
+            if current_msg:
+                messages.append(current_msg)
+
+            current_msg = {
+                "role": role,
+                "text": text,
+                "tool_calls": tools,
+                "timestamp": datetime.fromtimestamp(event.timestamp).isoformat(),
+            }
+
+    if current_msg:
+        messages.append(current_msg)
+
     return messages
 
 
