@@ -365,19 +365,43 @@
             const div = document.createElement('div');
             div.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
             
-            // Parse Markdown for bot messages
             let contentHtml = '';
             if (isUser) {
                 contentHtml = text.replace(/\n/g, '<br>');
+                div.innerHTML = `
+                    <div class="bg-blue-600 text-white rounded-lg p-4 max-w-[85%] text-sm shadow-sm markdown-body">
+                        ${contentHtml}
+                    </div>
+                `;
             } else {
                 contentHtml = marked.parse(text);
+                div.innerHTML = `
+                    <div class="bg-white text-gray-800 border border-gray-200 rounded-lg p-4 max-w-[85%] text-sm shadow-sm markdown-body">
+                        ${contentHtml}
+                    </div>
+                `;
+                
+                // Inject Play Buttons into bold text (after HTML parsing)
+                const messageBody = div.querySelector('.markdown-body');
+                const strongs = messageBody.querySelectorAll('strong');
+                strongs.forEach(strong => {
+                    const word = strong.innerText;
+                    
+                    const btn = document.createElement('button');
+                    btn.className = 'inline-flex items-center justify-center ml-1 text-blue-500 hover:text-blue-700 focus:outline-none align-middle';
+                    btn.title = 'Play Pronunciation';
+                    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>`;
+                    
+                    // Attach event listener directly to avoid escaping issues
+                    btn.onclick = (e) => {
+                        e.stopPropagation();
+                        playAudio(word);
+                    };
+                    
+                    strong.appendChild(btn);
+                });
             }
 
-            div.innerHTML = `
-                <div class="${isUser ? 'bg-blue-600 text-white' : 'bg-white text-gray-800 border border-gray-200'} rounded-lg p-4 max-w-[85%] text-sm shadow-sm markdown-body">
-                    ${contentHtml}
-                </div>
-            `;
             chatMessages.appendChild(div);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
