@@ -50,6 +50,37 @@ def review_vocabulary(topic: str = ""):
     return response
 
 
+def check_vocabulary(text: str):
+    """
+    Checks if a phrase already exists in the vocabulary.
+
+    Args:
+        text: The phrase to check.
+    """
+    results = vector_store.search_phrases(text, n_results=1)
+    if results and results[0]["distance"] < 0.1:
+        return f"Found similar phrase: '{results[0]['text']}' (Translation: {results[0]['metadata'].get('translation')})"
+    return "Phrase not found."
+
+
+def increment_review_count(text: str):
+    """
+    Increments the review count for a given phrase if it exists.
+
+    Args:
+        text: The phrase to update.
+    """
+    # Find the phrase first
+    results = vector_store.search_phrases(text, n_results=1)
+    if results and results[0]["distance"] < 0.1:
+        item = results[0]
+        current_score = item["metadata"].get("score", 0.0)
+        vector_store.update_review_stats(item["id"], score=current_score + 0.1)
+        return f"Updated review count for '{item['text']}'."
+    else:
+        return f"Phrase '{text}' not found."
+
+
 async def speak_text(tool_context: ToolContext, text: str, lang: str = "nl"):
     """
     Pronounces the text using text-to-speech and saves it as an artifact.

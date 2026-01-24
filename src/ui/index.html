@@ -64,12 +64,14 @@
                             <th class="px-4 py-2 text-left text-gray-600 font-medium">Translation</th>
                             <th class="px-4 py-2 text-left text-gray-600 font-medium">Language</th>
                             <th class="px-4 py-2 text-left text-gray-600 font-medium">Category</th>
+                            <th class="px-4 py-2 text-left text-gray-600 font-medium">Added</th>
+                            <th class="px-4 py-2 text-left text-gray-600 font-medium">Reviewed</th>
                             <th class="px-4 py-2 text-left text-gray-600 font-medium">Stats</th>
                         </tr>
                     </thead>
                     <tbody id="vocabulary-list" class="divide-y divide-gray-200">
                         <tr>
-                            <td colspan="5" class="px-4 py-2 text-center text-gray-500">Loading vocabulary...</td>
+                            <td colspan="7" class="px-4 py-2 text-center text-gray-500">Loading vocabulary...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -173,7 +175,7 @@
         function renderVocabulary(data) {
             const tbody = document.getElementById('vocabulary-list');
             if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center text-gray-500">No vocabulary found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-4 text-center text-gray-500">No vocabulary found.</td></tr>';
                 return;
             }
 
@@ -183,6 +185,11 @@
                 const isStarred = meta.starred === true;
                 const starColor = isStarred ? 'text-yellow-500' : 'text-gray-300';
                 const escapedText = item.text.replace(/'/g, "\\'");
+                const createdDate = meta.created_at ? new Date(meta.created_at).toLocaleDateString() : '-';
+                const createdAgo = meta.created_at ? timeAgo(meta.created_at) : '';
+                
+                const reviewDate = meta.last_review ? new Date(meta.last_review).toLocaleDateString() : '-';
+                const reviewAgo = meta.last_review ? timeAgo(meta.last_review) : '';
 
                 return `
                     <tr class="hover:bg-gray-50 transition-colors">
@@ -202,6 +209,14 @@
                         <td class="px-4 py-3 text-gray-600">${meta.translation || '-'}</td>
                         <td class="px-4 py-3 text-gray-600">${meta.language || '-'}</td>
                         <td class="px-4 py-3 text-gray-600">${meta.category || '-'}</td>
+                        <td class="px-4 py-3 text-gray-600 text-sm">
+                            <div>${createdDate}</div>
+                            <div class="text-xs text-gray-400">${createdAgo}</div>
+                        </td>
+                        <td class="px-4 py-3 text-gray-600 text-sm">
+                            <div>${reviewDate}</div>
+                            <div class="text-xs text-gray-400">${reviewAgo}</div>
+                        </td>
                         <td class="px-4 py-3 text-sm text-gray-500">
                             <div>Reviews: ${meta.review_count || 0}</div>
                             <div>Score: ${meta.score ? meta.score.toFixed(1) : '0.0'}</div>
@@ -210,6 +225,18 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        function timeAgo(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = now - date; // Difference in milliseconds
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays <= 0) return 'Today';
+            if (diffDays === 1) return 'Yesterday';
+            return `${diffDays} days ago`;
         }
 
         async function loadVocabulary() {

@@ -8,6 +8,8 @@ from ._tools import (
     speak_text,
     update_user_info,
     get_user_info,
+    check_vocabulary,
+    increment_review_count,
 )
 
 load_dotenv()
@@ -22,5 +24,7 @@ root_agent = Agent(
         speak_text,
         update_user_info,
         get_user_info,
+        check_vocabulary,
+        increment_review_count,
     ],
 )
