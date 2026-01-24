@@ -17,7 +17,8 @@ from src.agents.memory.vector_store import VectorStore
 from src.agents.agent import root_agent
 
 from google.adk.runners import App, Runner
-from google.adk.sessions import InMemorySessionService
+from google.adk.sessions.sqlite_session_service import SqliteSessionService
+from google.adk.errors.already_exists_error import AlreadyExistsError
 from google.genai import types
 
 app = FastAPI()
@@ -31,78 +32,9 @@ user_store = UserStore()
 vector_store = VectorStore()
 
 # Initialize ADK Runner
-session_service = InMemorySessionService()
+session_service = SqliteSessionService("chat_sessions.db")
 adk_app = App(name=root_agent.name, root_agent=root_agent)
 runner = Runner(app=adk_app, session_service=session_service)
-
-# Track active sessions to know when to create vs load (or just create once)
-active_sessions = set()
-
-
-class ChatManager:
-    def __init__(self, file_path="chat_history.json"):
-        self.file_path = file_path
-        self.sessions = {}  # {session_id: {created_at, title, messages: []}}
-        self.load()
-
-    def load(self):
-        if os.path.exists(self.file_path):
-            try:
-                with open(self.file_path, "r") as f:
-                    self.sessions = json.load(f)
-            except:
-                self.sessions = {}
-
-    def save(self):
-        with open(self.file_path, "w") as f:
-            json.dump(self.sessions, f, indent=2)
-
-    def create_session(self, session_id):
-        if session_id not in self.sessions:
-            self.sessions[session_id] = {
-                "created_at": datetime.now().isoformat(),
-                "title": f"Session {len(self.sessions) + 1}",
-                "messages": [],
-            }
-            self.save()
-
-    def add_message(self, session_id, role, text):
-        if session_id not in self.sessions:
-            self.create_session(session_id)
-
-        self.sessions[session_id]["messages"].append(
-            {"role": role, "text": text, "timestamp": datetime.now().isoformat()}
-        )
-
-        # Update title if it's the first user message
-        if role == "user" and len(self.sessions[session_id]["messages"]) <= 2:
-            self.sessions[session_id]["title"] = (
-                text[:30] + "..." if len(text) > 30 else text
-            )
-
-        self.save()
-
-    def get_sessions(self):
-        # Return list sorted by date (newest first)
-        result = []
-        for sid, data in self.sessions.items():
-            result.append(
-                {
-                    "id": sid,
-                    "title": data.get("title", "Untitled"),
-                    "created_at": data.get("created_at"),
-                    "msg_count": len(data.get("messages", [])),
-                }
-            )
-        # Sort by created_at descending
-        result.sort(key=lambda x: x["created_at"], reverse=True)
-        return result
-
-    def get_history(self, session_id):
-        return self.sessions.get(session_id, {}).get("messages", [])
-
-
-chat_manager = ChatManager()
 
 
 class ChatRequest(BaseModel):
@@ -143,12 +75,56 @@ async def toggle_star(doc_id: str):
 
 @app.get("/api/sessions")
 async def get_sessions():
-    return chat_manager.get_sessions()
+    # app_name is available via runner.app.name if not exposed directly
+    app_name = runner.app.name
+    response = await session_service.list_sessions(app_name=app_name)
+
+    result = []
+    for s in response.sessions:
+        result.append(
+            {
+                "id": s.id,
+                "title": f"Session {s.id[:8]}...",
+                "created_at": datetime.fromtimestamp(s.last_update_time).isoformat(),
+                "msg_count": 0,  # Not available in list summary
+            }
+        )
+    # Sort by created_at descending
+    result.sort(key=lambda x: x["created_at"], reverse=True)
+    return result
 
 
 @app.get("/api/sessions/{session_id}")
 async def get_session_history(session_id: str):
-    return chat_manager.get_history(session_id)
+    app_name = runner.app.name
+    session = await session_service.get_session(
+        app_name=app_name,
+        user_id="default_user",  # Backend default
+        session_id=session_id,
+    )
+
+    if not session:
+        return []
+
+    messages = []
+    for event in session.events:
+        if not event.content:
+            continue
+
+        text = ""
+        for part in event.content.parts:
+            if part.text:
+                text += part.text
+
+        if text:
+            messages.append(
+                {
+                    "role": event.content.role,
+                    "text": text,
+                    "timestamp": datetime.fromtimestamp(event.timestamp).isoformat(),
+                }
+            )
+    return messages
 
 
 @app.post("/api/chat")
@@ -156,17 +132,13 @@ async def chat_endpoint(request: ChatRequest):
     user_id = request.user_id or "default_user"
     session_id = request.session_id or str(uuid.uuid4())
 
-    if session_id not in active_sessions:
-        # Create new session in ADK
-        # Note: In a real app we might try to restore state from history,
-        # but for now we start fresh in ADK logic while keeping UI history.
+    # Ensure session exists in SQLite
+    try:
         await session_service.create_session(
-            state={}, app_name=runner.app_name, user_id=user_id, session_id=session_id
+            state={}, app_name=runner.app.name, user_id=user_id, session_id=session_id
         )
-        active_sessions.add(session_id)
-
-    # Save User Message
-    chat_manager.add_message(session_id, "user", request.message)
+    except AlreadyExistsError:
+        pass  # Session already exists, we can continue
 
     content = types.Content(
         role="user",
@@ -189,9 +161,6 @@ async def chat_endpoint(request: ChatRequest):
                 response_text += part.text
             elif part.function_call:
                 tool_calls.append(part.function_call.name)
-
-    # Save Agent Message
-    chat_manager.add_message(session_id, "model", response_text)
 
     return {
         "response": response_text,
