@@ -10,21 +10,22 @@ user_store = UserStore()
 
 
 def add_to_vocabulary(
-    tool_context: ToolContext, text: str, translation: str, context: str, category: str
+    session_id: str,
+    text: str,
+    translation: str,
+    context: str,
+    category: str,
 ):
     """
     Saves a new phrase/sentence to the user's vocabulary for future review.
 
     Args:
-        tool_context: The tool context (provided by system).
+        session_id: The conversation session ID.
         text: The text in the target language (e.g., Dutch).
         translation: The English translation.
         context: The surrounding conversation or situation.
         category: A tag like 'formal', 'informal', 'business', 'greeting'.
     """
-    session_id = None
-    if getattr(tool_context, "session", None):
-        session_id = getattr(tool_context.session, "id", None)
 
     # Store reference
     reference = {"session_id": session_id, "timestamp": time.time()}
