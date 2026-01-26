@@ -169,6 +169,9 @@ async def chat_endpoint(request: ChatRequest):
     user_id = request.user_id or "default_user"
     session_id = request.session_id or str(uuid.uuid4())
 
+    # Update streak
+    user_store.update_streak()
+
     # Ensure session exists in SQLite
     try:
         await session_service.create_session(
