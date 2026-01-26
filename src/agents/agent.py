@@ -11,7 +11,7 @@ from ._tools import (
     update_user_info,
     get_user_info,
     check_vocabulary,
-    increment_review_count,
+    update_word_mastery,
 )
 
 load_dotenv()
@@ -37,6 +37,6 @@ root_agent = Agent(
         update_user_info,
         get_user_info,
         check_vocabulary,
-        increment_review_count,
+        update_word_mastery,
     ],
 )

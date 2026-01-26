@@ -52,8 +52,6 @@ def review_vocabulary(topic: str = ""):
     for item in results:
         meta = item["metadata"]
         response += f"- {item['text']} ({meta.get('translation', 'N/A')})\n"
-        # Update retrieval count
-        vector_store.update_review_stats(item["id"], score=0.5)  # Default score update
     return response
 
 
@@ -70,20 +68,33 @@ def check_vocabulary(text: str):
     return "Phrase not found."
 
 
-def increment_review_count(text: str):
+def update_word_mastery(text: str, was_correct: bool = True):
     """
-    Increments the review count for a given phrase if it exists.
+    Updates the usage statistics for a phrase.
+    Increments review count and adjusts score based on correctness.
 
     Args:
-        text: The phrase to update.
+        text: The phrase used.
+        was_correct: Whether the user used the phrase correctly.
     """
     # Find the phrase first
     results = vector_store.search_phrases(text, n_results=1)
     if results and results[0]["distance"] < 0.1:
         item = results[0]
         current_score = item["metadata"].get("score", 0.0)
-        vector_store.update_review_stats(item["id"], score=current_score + 0.1)
-        return f"Updated review count for '{item['text']}'."
+
+        # Adjust score
+        if was_correct:
+            new_score = current_score + 0.1
+        else:
+            # Penalize slightly or keep same?
+            # "adjust the score if it was used properly and right"
+            # Let's subtract a bit, but floor at 0.
+            new_score = max(0.0, current_score - 0.1)
+
+        vector_store.update_review_stats(item["id"], score=new_score)
+        status = "correctly" if was_correct else "incorrectly"
+        return f"Updated stats for '{item['text']}'. Used {status}."
     else:
         return f"Phrase '{text}' not found."
 
