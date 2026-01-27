@@ -3,28 +3,46 @@ import uuid
 import json
 from datetime import datetime
 import chromadb
-from chromadb.utils import embedding_functions
 from dotenv import load_dotenv
+import google.generativeai as genai
+from chromadb import Documents, EmbeddingFunction, Embeddings
 
 load_dotenv()
+
+
+class GeminiEmbeddingFunction(EmbeddingFunction):
+    def __init__(
+        self,
+        api_key,
+        model_name="models/gemini-embedding-001",
+        dimension=768,
+    ):
+        genai.configure(api_key=api_key)
+        self.model_name = model_name
+        self.dimension = dimension
+
+    def __call__(self, input: Documents) -> Embeddings:
+        # This call sets the task_type and output_dimensionality
+        result = genai.embed_content(
+            model=self.model_name,
+            content=input,
+            task_type="retrieval_document",
+            output_dimensionality=self.dimension,
+        )
+        return result["embedding"]
 
 
 class VectorStore:
     def __init__(self):
         api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            print("Warning: GEMINI_API_KEY not found in environment variables.")
-
         self.client = chromadb.PersistentClient(path="./chroma_db")
 
-        # Use Google Generative AI Embeddings
-        # default model is usually models/embedding-001
-        self.ef = embedding_functions.GoogleGenerativeAiEmbeddingFunction(
-            api_key=api_key
-        )
+        # Use the custom function to fix the dimension at 768
+        self.ef = GeminiEmbeddingFunction(api_key=api_key, dimension=768)
 
         self.collection = self.client.get_or_create_collection(
-            name="vocabulary", embedding_function=self.ef
+            name="vocabulary",
+            embedding_function=self.ef,
         )
 
     def add_phrase(
