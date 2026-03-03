@@ -1,0 +1,63 @@
+# Settings for Backend (on Cloud Run).
+# See https://firebase.google.com/docs/app-hosting/configure#cloud-run
+runConfig:
+  minInstances: 0
+  maxInstances: 1
+  cpu: 1
+  memoryMiB: 256
+
+# Environment variables and secrets.
+env:
+  # ── Firebase client config (needed at BUILD time for Vite) ──────────────────
+  - variable: VITE_FIREBASE_API_KEY
+    value: AIzaSyAdIF6OlnL6ICsVInQFZ0llk4iWybKWGbI
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: VITE_FIREBASE_AUTH_DOMAIN
+    value: lingua-489020.firebaseapp.com
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: VITE_FIREBASE_PROJECT_ID
+    value: lingua-489020
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: VITE_FIREBASE_STORAGE_BUCKET
+    value: lingua-489020.firebasestorage.app
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: VITE_FIREBASE_MESSAGING_SENDER_ID
+    value: "866127420894"
+    availability:
+      - BUILD
+      - RUNTIME
+  - variable: VITE_FIREBASE_APP_ID
+    value: "1:866127420894:web:4cc770da87fa99bf44d14f"
+    availability:
+      - BUILD
+      - RUNTIME
+
+  # ── Agent Engine (server-side only, used by agentEngine.js) ─────────────────
+  - variable: ADK_BACKEND
+    value: agent_engine
+    availability:
+      - RUNTIME
+  - variable: ADK_APP_NAME
+    value: lingua
+    availability:
+      - RUNTIME
+  - variable: GOOGLE_CLOUD_PROJECT
+    value: lingua-489020
+    availability:
+      - RUNTIME
+  - variable: GOOGLE_CLOUD_LOCATION
+    value: europe-west4
+    availability:
+      - RUNTIME
+  - variable: REASONING_ENGINE_ID
+    value: "5348393993409396736"
+    availability:
+      - RUNTIME

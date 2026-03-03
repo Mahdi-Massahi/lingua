@@ -1,0 +1,37 @@
+@import 'tailwindcss';
+
+@theme {
+	--color-gray-850: #1f2937;
+	--color-gray-950: #030712;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #111827; }
+::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+
+/* Markdown Styles */
+.markdown-body { color: #e5e7eb; }
+.markdown-body p { margin-bottom: 0.5em; }
+.markdown-body ul { list-style-type: disc; margin-left: 1.5em; margin-bottom: 0.5em; }
+.markdown-body ol { list-style-type: decimal; margin-left: 1.5em; margin-bottom: 0.5em; }
+.markdown-body strong { font-weight: bold; color: #fff; }
+.markdown-body em { font-style: italic; }
+.markdown-body code { background-color: #374151; padding: 0.2em 0.4em; border-radius: 0.25em; font-family: monospace; color: #e5e7eb; }
+.markdown-body pre { background-color: #111827; border: 1px solid #374151; padding: 1em; border-radius: 0.5em; overflow-x: auto; margin-bottom: 0.5em; }
+.markdown-body pre code { background-color: transparent; padding: 0; border: none; }
+
+/* Shiny border effect */
+.shiny-border {
+	position: relative;
+}
+.shiny-border::after {
+	content: '';
+	position: absolute;
+	inset: -1px;
+	z-index: -1;
+	border-radius: inherit;
+	background: linear-gradient(45deg, rgba(139, 92, 246, 0.3), rgba(79, 70, 229, 0.1), rgba(139, 92, 246, 0.3));
+	filter: blur(1px);
+}

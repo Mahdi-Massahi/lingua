@@ -1,10 +1,21 @@
 .env
 .adk
 *.mp3
-*.json
 *.db
 *.sqlite3
 
 chroma_db/
-
 __pycache__/
+
+# SvelteKit / Node
+web/node_modules/
+web/.svelte-kit/
+web/build/
+
+# Firebase
+.firebase/
+.firebaserc
+
+# Data files (local dev)
+user_data.json
+chat_sessions.db

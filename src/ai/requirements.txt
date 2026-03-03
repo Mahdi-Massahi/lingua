@@ -1,0 +1,5 @@
+vertexai>=1.43.0
+google-adk>=1.26.0
+google-cloud-aiplatform>=1.133.0
+google-cloud-firestore>=2.0.0
+pytz>=2025.2
