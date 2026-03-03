@@ -24,6 +24,7 @@
 	},
 	"dependencies": {
 		"@google-cloud/secret-manager": "^6.1.1",
+		"@google-cloud/text-to-speech": "^6.4.0",
 		"@sveltejs/adapter-node": "^5.5.4",
 		"firebase": "^12.10.0",
 		"google-auth-library": "^10.6.1",
