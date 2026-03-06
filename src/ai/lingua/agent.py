@@ -35,36 +35,39 @@ async def check_and_save_vocab(callback_context: CallbackContext) -> None:
     Scans the agent's response for bolded vocabulary, checks if it exists,
     and adds it if it's new. Also persists session to Memory Bank.
     """
-    text = callback_context.session.events[-1].content.parts[-1].text
+    try:
+        text = callback_context.session.events[-1].content.parts[-1].text
 
-    # Find bolded words with translation: **word** (translation)
-    matches = re.findall(r"\*\*(.*?)\*\*\s*\((.*?)\)", text)
-    if matches:
-        logger.info("Found %d vocabulary matches in response", len(matches))
+        # Find bolded words with translation: **word** (translation)
+        matches = re.findall(r"\*\*(.*?)\*\*\s*\((.*?)\)", text)
+        if matches:
+            logger.info("Found %d vocabulary matches in response", len(matches))
 
-        for word, translation in matches:
-            word = word.strip(" .,!?;:")
-            translation = translation.strip()
+            for word, translation in matches:
+                word = word.strip(" .,!?;:")
+                translation = translation.strip()
 
-            if not word:
-                continue
+                if not word:
+                    continue
 
-            existing = find_vocab_by_text(word)
-            if existing:
-                continue
+                existing = find_vocab_by_text(word)
+                if existing:
+                    continue
 
-            session_id = callback_context.session.id
-            try:
-                add_to_vocabulary(
-                    session_id,
-                    word,
-                    translation=translation,
-                    context=text[:200],
-                    category="auto-saved",
-                )
-                logger.info("Auto-saved vocab: %s", word)
-            except Exception as e:
-                logger.error("Error saving vocab '%s': %s", word, e)
+                session_id = callback_context.session.id
+                try:
+                    add_to_vocabulary(
+                        session_id,
+                        word,
+                        translation=translation,
+                        context=text[:200],
+                        category="auto-saved",
+                    )
+                    logger.info("Auto-saved vocab: %s", word)
+                except Exception as e:
+                    logger.error("Error saving vocab '%s': %s", word, e)
+    except Exception as e:
+        logger.warning("Vocab extraction failed: %s", e)
 
     # Persist session to Memory Bank for long-term user memory
     try:

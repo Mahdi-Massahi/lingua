@@ -5,7 +5,7 @@ from google.cloud import firestore
 
 logger = logging.getLogger(__name__)
 
-db = firestore.Client()
+db = firestore.Client(project="lingua-489020")
 VOCAB_COLLECTION = "vocabulary"
 USERS_COLLECTION = "users"
 DEFAULT_USER_ID = "default_user"
