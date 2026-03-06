@@ -7,8 +7,6 @@ logger = logging.getLogger(__name__)
 
 db = firestore.Client(project="lingua-489020")
 VOCAB_COLLECTION = "vocabulary"
-USERS_COLLECTION = "users"
-DEFAULT_USER_ID = "default_user"
 
 
 def add_to_vocabulary(
@@ -131,22 +129,3 @@ def update_word_mastery(text: str, was_correct: bool = True):
     return f"Updated stats for '{data['text']}'. Used {status}."
 
 
-def update_user_info(key: str, value: str):
-    """
-    Updates the user's profile information.
-
-    Args:
-        key: The attribute to update (e.g., 'name', 'level', 'topic_interest').
-        value: The value to set.
-    """
-    doc_ref = db.collection(USERS_COLLECTION).document(DEFAULT_USER_ID)
-    doc_ref.set({key: value}, merge=True)
-    return f"Updated profile: {key} = {value}"
-
-
-def get_user_info():
-    """Retrieves the user's profile."""
-    doc = db.collection(USERS_COLLECTION).document(DEFAULT_USER_ID).get()
-    if doc.exists:
-        return str(doc.to_dict())
-    return "No profile data found."

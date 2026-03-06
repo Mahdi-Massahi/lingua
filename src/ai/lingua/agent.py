@@ -13,8 +13,6 @@ from ._tools import (
     add_to_vocabulary,
     find_vocab_by_text,
     review_vocabulary,
-    update_user_info,
-    get_user_info,
     update_word_mastery,
 )
 
@@ -84,8 +82,6 @@ root_agent = Agent(
     after_agent_callback=check_and_save_vocab,
     tools=[
         review_vocabulary,
-        update_user_info,
-        get_user_info,
         update_word_mastery,
         PreloadMemoryTool(),
         LoadMemoryTool(),

@@ -54,30 +54,19 @@
 		<p class="text-gray-400">Track your language learning progress</p>
 	</header>
 
-	<!-- User Profile -->
+	<!-- Activity Streak -->
 	<section class="bg-gray-900 border border-white/5 rounded-2xl p-6 mb-8 shiny-border shadow-xl">
-		<h2 class="text-xl font-semibold mb-4 text-violet-300">User Profile</h2>
-		{#if Object.keys(profile).length === 0}
-			<p class="text-gray-500">No profile data available yet.</p>
-		{:else}
-			<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-				<!-- Streak cards -->
-				<div class="bg-gray-800/50 p-2 rounded-lg border border-white/5 shiny-border relative overflow-hidden">
-					<span class="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Streak</span>
-					<span class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">🔥 {profile.current_streak || 0}</span>
-				</div>
-				<div class="bg-gray-800/50 p-2 rounded-lg border border-white/5 relative overflow-hidden">
-					<span class="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Max</span>
-					<span class="text-lg text-gray-100 font-bold">⚡ {profile.max_streak || 0}</span>
-				</div>
-				{#each Object.entries(profile).filter(([k]) => !['current_streak', 'max_streak', 'last_active_date'].includes(k)) as [key, value]}
-					<div class="bg-gray-800/50 p-2 rounded-lg border border-white/5 hover:border-white/10 transition-colors flex flex-col justify-between">
-						<span class="text-[9px] font-bold text-gray-500 uppercase tracking-wider truncate mb-0.5">{key.replace(/_/g, ' ')}</span>
-						<span class="text-xs text-gray-200 break-words font-medium leading-tight">{typeof value === 'object' ? value?.value || JSON.stringify(value) : value}</span>
-					</div>
-				{/each}
+		<h2 class="text-xl font-semibold mb-4 text-violet-300">Activity</h2>
+		<div class="flex gap-2">
+			<div class="bg-gray-800/50 p-2 rounded-lg border border-white/5 shiny-border relative overflow-hidden">
+				<span class="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Streak</span>
+				<span class="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">🔥 {profile.current_streak || 0}</span>
 			</div>
-		{/if}
+			<div class="bg-gray-800/50 p-2 rounded-lg border border-white/5 relative overflow-hidden">
+				<span class="block text-[9px] font-bold text-gray-500 uppercase tracking-wider mb-0.5">Max</span>
+				<span class="text-lg text-gray-100 font-bold">⚡ {profile.max_streak || 0}</span>
+			</div>
+		</div>
 	</section>
 
 	<!-- Vocabulary -->
