@@ -14,6 +14,7 @@
 	let sessionsError = $state(null);
 	let chatContainer = $state(null);
 	let profile = $state({});
+	let sidebarOpen = $state(false);
 
 	const userId = auth.currentUser?.uid || 'default_user';
 
@@ -49,6 +50,7 @@
 	async function loadSession(sessionId) {
 		currentSessionId = sessionId;
 		messages = [];
+		sidebarOpen = false;
 
 		try {
 			const res = await fetch(`/chat/session?sessionId=${encodeURIComponent(sessionId)}&userId=${encodeURIComponent(userId)}`);
@@ -87,6 +89,14 @@
 	function createNewSession() {
 		currentSessionId = null;
 		messages = [];
+		sidebarOpen = false;
+	}
+
+	function formatSessionTime(timestamp) {
+		if (!timestamp) return 'New session';
+		const d = new Date(timestamp * 1000);
+		return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) +
+			', ' + d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 	}
 
 	function renderMarkdown(text) {
@@ -122,7 +132,6 @@
 	}
 
 	function addPronunciationButtons(html) {
-		// Add play buttons to bold words in rendered HTML
 		return html.replace(/<strong>(.*?)<\/strong>/g, (_, word) => {
 			return `<strong>${word}</strong><button class="inline-flex items-center justify-center ml-1 text-violet-400 hover:text-white bg-violet-500/10 hover:bg-violet-500 rounded p-0.5 transition-colors align-middle pronunciation-btn" data-word="${word.replace(/"/g, '&quot;')}"><svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg></button>`;
 		});
@@ -138,14 +147,42 @@
 </script>
 
 <main class="flex-1 flex min-h-0" style="height: calc(100vh - 57px);">
+	<!-- Mobile sidebar toggle -->
+	<button
+		onclick={() => sidebarOpen = true}
+		class="md:hidden fixed top-[70px] left-3 z-40 bg-gray-800 border border-white/10 text-gray-300 p-2 rounded-lg shadow-lg"
+		aria-label="Open sessions"
+	>
+		<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+		</svg>
+	</button>
+
+	<!-- Mobile sidebar overlay -->
+	{#if sidebarOpen}
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div class="md:hidden fixed inset-0 bg-black/60 z-40" onclick={() => sidebarOpen = false}></div>
+	{/if}
+
 	<!-- Sidebar -->
-	<div class="w-80 bg-gray-900 border-r border-white/5 flex flex-col min-h-0">
-		<div class="p-4 border-b border-white/5">
-			<button onclick={createNewSession} class="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 py-3 rounded-xl hover:from-violet-500 hover:to-indigo-500 transition-all shadow-lg shadow-violet-500/20 font-medium flex items-center justify-center gap-2">
+	<div class="
+		{sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+		md:translate-x-0 fixed md:static inset-y-0 left-0 z-50 md:z-auto
+		w-72 md:w-80 bg-gray-900 border-r border-white/5 flex flex-col min-h-0
+		transition-transform duration-200 ease-in-out
+	">
+		<div class="p-4 border-b border-white/5 flex items-center gap-2">
+			<button onclick={createNewSession} class="flex-1 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 py-3 rounded-xl hover:from-violet-500 hover:to-indigo-500 transition-all shadow-lg shadow-violet-500/20 font-medium flex items-center justify-center gap-2">
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
 					<path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
 				</svg>
 				New Chat
+			</button>
+			<button onclick={() => sidebarOpen = false} class="md:hidden text-gray-400 hover:text-white p-2 rounded-lg" aria-label="Close sidebar">
+				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+				</svg>
 			</button>
 		</div>
 		<div class="flex-1 overflow-y-auto p-3 space-y-2">
@@ -164,11 +201,8 @@
 						onclick={() => loadSession(session.id)}
 						class="w-full text-left px-4 py-3 rounded-xl transition-all mb-2 flex flex-col gap-1 border border-transparent hover:bg-gray-800 hover:border-white/5 {currentSessionId === session.id ? 'bg-gray-800 border-violet-500/30 shadow-md' : ''}"
 					>
-						<div class="truncate text-gray-200 font-medium {currentSessionId === session.id ? 'text-violet-300' : ''}">
-							Session {String(session.id ?? '').substring(0, 8)}...
-						</div>
-						<div class="text-xs text-gray-500">
-							{session.last_update_time ? new Date(session.last_update_time * 1000).toLocaleDateString() : ''}
+						<div class="truncate text-gray-200 font-medium text-sm {currentSessionId === session.id ? 'text-violet-300' : ''}">
+							{formatSessionTime(session.lastUpdateTime)}
 						</div>
 					</button>
 				{/each}
@@ -187,7 +221,7 @@
 		<!-- Messages -->
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div bind:this={chatContainer} onclick={handleChatClick} class="flex-1 overflow-y-auto p-6 space-y-6 z-10">
+		<div bind:this={chatContainer} onclick={handleChatClick} class="flex-1 overflow-y-auto p-3 md:p-6 space-y-4 md:space-y-6 z-10">
 			{#if messages.length === 0 && !loading}
 				<div class="flex h-full items-center justify-center text-gray-500 flex-col">
 					<div class="p-6 rounded-full bg-gray-900/50 border border-white/5 mb-4">
@@ -195,18 +229,18 @@
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
 						</svg>
 					</div>
-					<p class="font-medium">Select a session or start a new chat</p>
+					<p class="font-medium text-sm md:text-base">Select a session or start a new chat</p>
 				</div>
 			{/if}
 
 			{#each messages as msg}
 				<div class="flex {msg.role === 'user' ? 'justify-end' : 'justify-start'}">
 					{#if msg.role === 'user'}
-						<div class="bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-2xl rounded-tr-none p-4 max-w-[85%] text-sm shadow-lg shadow-violet-900/20">
+						<div class="bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-2xl rounded-tr-none p-3 md:p-4 max-w-[90%] md:max-w-[85%] text-sm shadow-lg shadow-violet-900/20">
 							{msg.text}
 						</div>
 					{:else}
-						<div class="bg-gray-800 text-gray-200 border border-white/5 rounded-2xl rounded-tl-none p-5 max-w-[85%] text-sm shadow-xl markdown-body">
+						<div class="bg-gray-800 text-gray-200 border border-white/5 rounded-2xl rounded-tl-none p-3 md:p-5 max-w-[90%] md:max-w-[85%] text-sm shadow-xl markdown-body">
 							{@html addPronunciationButtons(renderMarkdown(msg.text))}
 						</div>
 					{/if}
@@ -225,12 +259,12 @@
 		</div>
 
 		<!-- Input -->
-		<div class="p-6 border-t border-white/5 bg-gray-900/50 backdrop-blur-sm z-10">
+		<div class="p-3 md:p-6 border-t border-white/5 bg-gray-900/50 backdrop-blur-sm z-10">
 			<form
 				method="POST"
 				action="/chat?/sendMessage"
 				use:enhance={handleEnhance}
-				class="flex gap-3 max-w-4xl mx-auto"
+				class="flex gap-2 md:gap-3 max-w-4xl mx-auto"
 			>
 				<input type="hidden" name="userId" value={userId} />
 				{#if currentSessionId}
@@ -240,12 +274,12 @@
 					type="text"
 					name="message"
 					bind:value={inputMessage}
-					class="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-5 py-3.5 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 shadow-sm text-white placeholder-gray-500"
+					class="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 md:px-5 py-3 md:py-3.5 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 shadow-sm text-white placeholder-gray-500 text-sm md:text-base"
 					placeholder="Type a message..."
 					autocomplete="off"
 					disabled={loading}
 				/>
-				<button type="submit" class="bg-violet-600 text-white px-6 py-2 rounded-xl hover:bg-violet-500 transition-colors font-medium shadow-lg shadow-violet-500/20" disabled={loading}>
+				<button type="submit" class="bg-violet-600 text-white px-4 md:px-6 py-2 rounded-xl hover:bg-violet-500 transition-colors font-medium shadow-lg shadow-violet-500/20" disabled={loading}>
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
 						<path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
 					</svg>

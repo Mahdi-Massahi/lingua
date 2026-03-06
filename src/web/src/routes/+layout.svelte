@@ -39,22 +39,22 @@
 	</div>
 {:else}
 	<nav class="bg-gray-900/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
-		<div class="container mx-auto px-4 py-3 flex justify-between items-center">
-			<h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-purple-400">
+		<div class="container mx-auto px-2 sm:px-4 py-2 sm:py-3 flex justify-between items-center">
+			<h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-purple-400">
 				Lingua
 			</h1>
-			<div class="flex items-center gap-4">
+			<div class="flex items-center gap-2 sm:gap-4">
 				<div class="space-x-1 bg-gray-800/50 p-1 rounded-lg border border-white/5">
 					<a
 						href="/"
-						class="px-4 py-1.5 rounded-md text-sm font-medium transition-all {isActive('/') ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-gray-400 hover:text-white'}"
+						class="px-3 sm:px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all {isActive('/') ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-gray-400 hover:text-white'}"
 					>Dashboard</a>
 					<a
 						href="/chat"
-						class="px-4 py-1.5 rounded-md text-sm font-medium transition-all {isActive('/chat') ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-gray-400 hover:text-white'}"
+						class="px-3 sm:px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all {isActive('/chat') ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-gray-400 hover:text-white'}"
 					>Chat</a>
 				</div>
-				<button onclick={signOut} class="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+				<button onclick={signOut} class="text-xs text-gray-500 hover:text-gray-300 transition-colors hidden sm:block">
 					Sign out
 				</button>
 			</div>
