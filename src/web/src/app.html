@@ -2,11 +2,25 @@
 <html lang="en" class="dark">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<title>Lingua</title>
+
+		<!-- PWA Manifest -->
+		<link rel="manifest" href="/manifest.json" />
+		<meta name="theme-color" content="#030712" />
+
+		<!-- iOS PWA -->
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+		<meta name="apple-mobile-web-app-title" content="Lingua" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+		<!-- Favicon -->
+		<link rel="icon" type="image/svg+xml" href="/icon.svg" />
+
 		%sveltekit.head%
 	</head>
-	<body class="bg-gray-950 text-gray-100 h-screen font-sans antialiased selection:bg-violet-500/30" data-sveltekit-preload-data="hover">
+	<body class="bg-gray-950 text-gray-100 h-dvh flex flex-col overflow-hidden font-sans antialiased selection:bg-violet-500/30" data-sveltekit-preload-data="hover">
 		<div style="display: contents">%sveltekit.body%</div>
 	</body>
 </html>

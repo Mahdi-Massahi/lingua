@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#030712"/>
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#4f46e5"/>
+    </linearGradient>
+  </defs>
+  <rect x="96" y="96" width="320" height="260" rx="40" fill="url(#g)"/>
+  <polygon points="160,356 210,356 140,426" fill="url(#g)"/>
+  <text x="256" y="305" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="200" font-weight="bold" fill="white">L</text>
+</svg>

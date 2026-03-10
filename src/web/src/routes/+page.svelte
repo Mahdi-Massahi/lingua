@@ -91,7 +91,7 @@
 				<thead class="bg-gray-800/50 text-gray-400 text-xs uppercase tracking-wider font-semibold">
 					<tr>
 						<th class="px-3 sm:px-6 py-3 sm:py-4">Phrase</th>
-						<th class="px-3 sm:px-6 py-3 sm:py-4">Translation</th>
+						<th class="hidden sm:table-cell px-6 py-4">Translation</th>
 						<th class="px-6 py-4 hidden sm:table-cell">Category</th>
 						<th class="px-6 py-4 hidden sm:table-cell">Added</th>
 						<th class="px-6 py-4 hidden sm:table-cell">Stats</th>
@@ -101,24 +101,50 @@
 					{#each filteredVocab() as item (item.id)}
 						<tr class="hover:bg-white/5 transition-colors group">
 							<td class="px-3 sm:px-6 py-3 sm:py-4 font-medium text-gray-100">
-								<div class="flex items-center gap-2 sm:gap-3">
-									<button onclick={() => speak(item.text)} class="text-violet-400 hover:text-white hover:bg-violet-600 p-1.5 rounded-full transition-all shrink-0" title="Play">
+								<!-- Mobile: buttons stacked left, all content right -->
+								<div class="flex items-start gap-2 sm:hidden">
+									<div class="flex flex-col items-center gap-1.5 shrink-0 pt-0.5">
+										<button onclick={() => speak(item.text)} class="text-violet-400 hover:text-white hover:bg-violet-600 p-1.5 rounded-full transition-all" title="Play" aria-label="Play">
+											<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+												<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+											</svg>
+										</button>
+										<button
+											onclick={() => handleToggleStar(item.id, item.starred)}
+											aria-label="Star"
+											class="{item.starred ? 'text-yellow-400' : 'text-gray-500'} p-1 rounded-lg hover:bg-white/10 transition-colors"
+										>
+											<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+												<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+											</svg>
+										</button>
+									</div>
+									<div class="min-w-0 flex-1">
+										<div class="text-sm font-semibold text-gray-100 leading-snug">{item.text}</div>
+										<div class="text-sm text-gray-400 mt-0.5 leading-snug">{item.translation || '-'}</div>
+										<div class="text-xs text-gray-500 mt-1">{item.review_count || 0} reviews{item.created_at ? ' · ' + timeAgo(item.created_at) : ''}</div>
+									</div>
+								</div>
+								<!-- Desktop: original horizontal layout -->
+								<div class="hidden sm:flex items-center gap-3">
+									<button onclick={() => speak(item.text)} class="text-violet-400 hover:text-white hover:bg-violet-600 p-1.5 rounded-full transition-all shrink-0" title="Play" aria-label="Play">
 										<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
 											<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
 										</svg>
 									</button>
 									<button
 										onclick={() => handleToggleStar(item.id, item.starred)}
+										aria-label="Star"
 										class="{item.starred ? 'text-yellow-400' : 'text-gray-600 group-hover:text-gray-400'} p-1.5 rounded-lg hover:bg-white/10 transition-colors shrink-0"
 									>
 										<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
 											<path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
 										</svg>
 									</button>
-									<span class="text-sm sm:text-base">{item.text}</span>
+									<span class="text-base">{item.text}</span>
 								</div>
 							</td>
-							<td class="px-3 sm:px-6 py-3 sm:py-4 text-gray-300 text-sm">{item.translation || '-'}</td>
+							<td class="hidden sm:table-cell px-6 py-4 text-gray-300 text-sm">{item.translation || '-'}</td>
 							<td class="px-6 py-4 hidden sm:table-cell">
 								<span class="px-2 py-1 rounded bg-gray-800 border border-gray-700 text-xs text-gray-300">{item.category || 'General'}</span>
 							</td>

@@ -4,6 +4,7 @@
 	import { auth, updateStreak, subscribeProfile } from '$lib/firebase.js';
 	import { speak } from '$lib/speech.js';
 	import { marked } from 'marked';
+	import { ui } from '$lib/ui.svelte.js';
 
 	let sessions = $state([]);
 	let currentSessionId = $state(null);
@@ -13,8 +14,8 @@
 	let loadingSessions = $state(false);
 	let sessionsError = $state(null);
 	let chatContainer = $state(null);
+	let textareaEl = $state(null);
 	let profile = $state({});
-	let sidebarOpen = $state(false);
 
 	const userId = auth.currentUser?.uid || 'default_user';
 
@@ -50,7 +51,7 @@
 	async function loadSession(sessionId) {
 		currentSessionId = sessionId;
 		messages = [];
-		sidebarOpen = false;
+		ui.sidebarOpen = false;
 
 		try {
 			const res = await fetch(`/chat/session?sessionId=${encodeURIComponent(sessionId)}&userId=${encodeURIComponent(userId)}`);
@@ -89,7 +90,7 @@
 	function createNewSession() {
 		currentSessionId = null;
 		messages = [];
-		sidebarOpen = false;
+		ui.sidebarOpen = false;
 	}
 
 	function formatSessionTime(timestamp) {
@@ -110,6 +111,7 @@
 		messages = [...messages, { role: 'user', text: message }];
 		inputMessage = '';
 		loading = true;
+		tick().then(() => autoResize());
 		scrollToBottom();
 
 		await updateStreak(userId, profile);
@@ -137,6 +139,19 @@
 		});
 	}
 
+	function autoResize() {
+		if (!textareaEl) return;
+		textareaEl.style.height = 'auto';
+		textareaEl.style.height = Math.min(textareaEl.scrollHeight, 150) + 'px';
+	}
+
+	function handleKeydown(e) {
+		if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+			e.preventDefault();
+			textareaEl?.form?.requestSubmit();
+		}
+	}
+
 	function handleChatClick(e) {
 		const btn = e.target.closest('.pronunciation-btn');
 		if (btn) {
@@ -146,31 +161,20 @@
 	}
 </script>
 
-<main class="flex-1 flex min-h-0" style="height: calc(100vh - 57px);">
-	<!-- Mobile sidebar toggle -->
-	<button
-		onclick={() => sidebarOpen = true}
-		class="md:hidden fixed top-[70px] left-3 z-40 bg-gray-800 border border-white/10 text-gray-300 p-2 rounded-lg shadow-lg"
-		aria-label="Open sessions"
-	>
-		<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-		</svg>
-	</button>
-
+<main class="flex-1 flex min-h-0">
 	<!-- Mobile sidebar overlay -->
-	{#if sidebarOpen}
+	{#if ui.sidebarOpen}
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<div class="md:hidden fixed inset-0 bg-black/60 z-40" onclick={() => sidebarOpen = false}></div>
+		<div class="md:hidden fixed inset-0 bg-black/60 z-40" onclick={() => ui.sidebarOpen = false}></div>
 	{/if}
 
 	<!-- Sidebar -->
 	<div class="
-		{sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+		{ui.sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
 		md:translate-x-0 fixed md:static inset-y-0 left-0 z-50 md:z-auto
 		w-72 md:w-80 bg-gray-900 border-r border-white/5 flex flex-col min-h-0
-		transition-transform duration-200 ease-in-out
+		transition-transform duration-200 ease-in-out pwa-nav pwa-bottom-bar
 	">
 		<div class="p-4 border-b border-white/5 flex items-center gap-2">
 			<button onclick={createNewSession} class="flex-1 bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-4 py-3 rounded-xl hover:from-violet-500 hover:to-indigo-500 transition-all shadow-lg shadow-violet-500/20 font-medium flex items-center justify-center gap-2">
@@ -179,7 +183,7 @@
 				</svg>
 				New Chat
 			</button>
-			<button onclick={() => sidebarOpen = false} class="md:hidden text-gray-400 hover:text-white p-2 rounded-lg" aria-label="Close sidebar">
+			<button onclick={() => ui.sidebarOpen = false} class="md:hidden text-gray-400 hover:text-white p-2 rounded-lg" aria-label="Close sidebar">
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
 				</svg>
@@ -236,11 +240,11 @@
 			{#each messages as msg}
 				<div class="flex {msg.role === 'user' ? 'justify-end' : 'justify-start'}">
 					{#if msg.role === 'user'}
-						<div class="bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-2xl rounded-tr-none p-3 md:p-4 max-w-[90%] md:max-w-[85%] text-sm shadow-lg shadow-violet-900/20">
+						<div class="bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-3xl rounded-tr-sm p-3 md:p-4 max-w-[90%] md:max-w-[85%] text-sm shadow-lg shadow-violet-900/20 whitespace-pre-wrap">
 							{msg.text}
 						</div>
 					{:else}
-						<div class="bg-gray-800 text-gray-200 border border-white/5 rounded-2xl rounded-tl-none p-3 md:p-5 max-w-[90%] md:max-w-[85%] text-sm shadow-xl markdown-body">
+						<div class="bg-gray-800 text-gray-200 border border-white/5 rounded-3xl rounded-tl-sm p-3 md:p-5 max-w-[90%] md:max-w-[85%] text-sm shadow-xl markdown-body">
 							{@html addPronunciationButtons(renderMarkdown(msg.text))}
 						</div>
 					{/if}
@@ -249,7 +253,7 @@
 
 			{#if loading}
 				<div class="flex justify-start animate-pulse">
-					<div class="bg-gray-800 text-gray-400 rounded-2xl rounded-tl-none p-4 text-sm border border-white/5 flex gap-1">
+					<div class="bg-gray-800 text-gray-400 rounded-3xl rounded-tl-sm p-4 text-sm border border-white/5 flex gap-1">
 						<span class="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce"></span>
 						<span class="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
 						<span class="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style="animation-delay: 0.4s"></span>
@@ -259,27 +263,31 @@
 		</div>
 
 		<!-- Input -->
-		<div class="p-3 md:p-6 border-t border-white/5 bg-gray-900/50 backdrop-blur-sm z-10">
+		<div class="p-3 md:p-6 border-t border-white/5 bg-gray-900/50 backdrop-blur-sm z-10 pwa-bottom-bar pwa-safe-x">
 			<form
 				method="POST"
 				action="/chat?/sendMessage"
 				use:enhance={handleEnhance}
-				class="flex gap-2 md:gap-3 max-w-4xl mx-auto"
+				class="flex gap-2 md:gap-3 max-w-4xl mx-auto items-end"
 			>
 				<input type="hidden" name="userId" value={userId} />
 				{#if currentSessionId}
 					<input type="hidden" name="sessionId" value={currentSessionId} />
 				{/if}
-				<input
-					type="text"
+				<textarea
 					name="message"
+					bind:this={textareaEl}
 					bind:value={inputMessage}
-					class="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 md:px-5 py-3 md:py-3.5 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 shadow-sm text-white placeholder-gray-500 text-sm md:text-base"
+					oninput={autoResize}
+					onkeydown={handleKeydown}
+					class="flex-1 bg-gray-800 border border-gray-700 rounded-2xl px-4 md:px-5 py-3 md:py-3.5 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 shadow-sm text-white placeholder-gray-500 text-sm md:text-base resize-none leading-normal overflow-y-auto"
 					placeholder="Type a message..."
 					autocomplete="off"
 					disabled={loading}
-				/>
-				<button type="submit" class="bg-violet-600 text-white px-4 md:px-6 py-2 rounded-xl hover:bg-violet-500 transition-colors font-medium shadow-lg shadow-violet-500/20" disabled={loading}>
+					rows="1"
+					style="max-height: 150px;"
+				></textarea>
+				<button type="submit" class="bg-violet-600 text-white px-4 md:px-5 py-3 rounded-2xl hover:bg-violet-500 transition-colors font-medium shadow-lg shadow-violet-500/20 shrink-0" disabled={loading}>
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
 						<path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
 					</svg>

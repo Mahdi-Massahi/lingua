@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import { onAuth, signIn, signOut } from '$lib/firebase.js';
 	import { page } from '$app/state';
+	import { ui } from '$lib/ui.svelte.js';
 
 	let { children } = $props();
 	let user = $state(null);
@@ -21,7 +22,7 @@
 </script>
 
 {#if loading}
-	<div class="flex h-screen items-center justify-center">
+	<div class="flex h-full items-center justify-center">
 		<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-500"></div>
 	</div>
 {:else if !user}
@@ -38,11 +39,20 @@
 		</button>
 	</div>
 {:else}
-	<nav class="bg-gray-900/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-50">
+	<nav class="bg-gray-900/80 backdrop-blur-md border-b border-white/5 sticky top-0 z-50 pwa-nav pwa-safe-x">
 		<div class="container mx-auto px-2 sm:px-4 py-2 sm:py-3 flex justify-between items-center">
-			<h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-purple-400">
-				Lingua
-			</h1>
+			<div class="flex items-center gap-1">
+				{#if isActive('/chat')}
+					<button onclick={() => ui.sidebarOpen = true} class="md:hidden text-gray-400 hover:text-white p-1.5 rounded-lg" aria-label="Open sessions">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+						</svg>
+					</button>
+				{/if}
+				<h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-purple-400">
+					Lingua
+				</h1>
+			</div>
 			<div class="flex items-center gap-2 sm:gap-4">
 				<div class="space-x-1 bg-gray-800/50 p-1 rounded-lg border border-white/5">
 					<a
