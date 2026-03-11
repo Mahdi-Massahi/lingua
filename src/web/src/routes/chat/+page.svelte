@@ -1,7 +1,7 @@
 <script>
 	import { onMount, tick } from 'svelte';
 	import { enhance } from '$app/forms';
-	import { auth, updateStreak, subscribeProfile } from '$lib/firebase.js';
+	import { auth, updateStreak, subscribeProfile, setSessionTitle, subscribeSessionTitles } from '$lib/firebase.js';
 	import { speak } from '$lib/speech.js';
 	import { marked } from 'marked';
 	import { ui } from '$lib/ui.svelte.js';
@@ -16,13 +16,16 @@
 	let chatContainer = $state(null);
 	let textareaEl = $state(null);
 	let profile = $state({});
+	/** @type {Record<string, string>} */
+	let sessionTitles = $state({});
 
 	const userId = auth.currentUser?.uid || 'default_user';
 
 	onMount(() => {
 		loadSessions();
-		const unsub = subscribeProfile(userId, (p) => { profile = p; });
-		return unsub;
+		const unsubProfile = subscribeProfile(userId, (p) => { profile = p; });
+		const unsubTitles = subscribeSessionTitles(userId, (t) => { sessionTitles = t; });
+		return () => { unsubProfile(); unsubTitles(); };
 	});
 
 	async function scrollToBottom() {
@@ -124,6 +127,13 @@
 				messages = [...messages, { role: 'model', text: data.botResponse }];
 				if (data.sessionId && data.sessionId !== currentSessionId) {
 					currentSessionId = data.sessionId;
+					// Generate title from the first user message of this new session
+					const firstUserMsg = messages.find((m) => m.role === 'user');
+					if (firstUserMsg) {
+						const words = firstUserMsg.text.trim().split(/\s+/);
+						const title = words.slice(0, 5).join(' ') + (words.length > 5 ? '…' : '');
+						setSessionTitle(userId, data.sessionId, title);
+					}
 					loadSessions();
 				}
 			} else {
@@ -205,9 +215,12 @@
 						onclick={() => loadSession(session.id)}
 						class="w-full text-left px-4 py-3 rounded-xl transition-all mb-2 flex flex-col gap-1 border border-transparent hover:bg-gray-800 hover:border-white/5 {currentSessionId === session.id ? 'bg-gray-800 border-violet-500/30 shadow-md' : ''}"
 					>
-						<div class="truncate text-gray-200 font-medium text-sm {currentSessionId === session.id ? 'text-violet-300' : ''}">
-							{formatSessionTime(session.lastUpdateTime)}
+						<div class="truncate text-sm font-medium {currentSessionId === session.id ? 'text-violet-300' : 'text-gray-200'}">
+							{sessionTitles[session.id] || formatSessionTime(session.lastUpdateTime)}
 						</div>
+						{#if sessionTitles[session.id]}
+							<div class="text-xs text-gray-500">{formatSessionTime(session.lastUpdateTime)}</div>
+						{/if}
 					</button>
 				{/each}
 			{/if}

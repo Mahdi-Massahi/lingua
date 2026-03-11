@@ -63,6 +63,10 @@
 						href="/chat"
 						class="px-3 sm:px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all {isActive('/chat') ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-gray-400 hover:text-white'}"
 					>Chat</a>
+					<a
+						href="/quiz"
+						class="px-3 sm:px-4 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-all {isActive('/quiz') ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20' : 'text-gray-400 hover:text-white'}"
+					>Quiz</a>
 				</div>
 				<button onclick={signOut} class="text-xs text-gray-500 hover:text-gray-300 transition-colors hidden sm:block">
 					Sign out

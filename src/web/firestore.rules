@@ -11,6 +11,11 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Session titles subcollection
+    match /users/{userId}/sessionTitles/{sessionId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
     // Allow the agent's service account (server-side) to write to any doc
     // Agent Engine tools use admin SDK which bypasses rules
   }
